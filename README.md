@@ -62,7 +62,8 @@ Each fused update includes:
 The network output currently emits JSON messages (suitable for a thin dashboard).
 
 ## Repository layout
-text
+
+```text
 BattlefieldSensorFusion/
 ├── CMakeLists.txt
 ├── README.md
