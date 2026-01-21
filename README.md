@@ -36,40 +36,32 @@ A portfolio-ready C++17 backend that ingests multiple noisy, asynchronous battle
   |    CLI     |          |   Network Output |
   | Visualizer |          |  (port 8080)     |
   +------------+          +------------------+
-Threading model (typical)
+```
 
-Sensor generator(s): 1 thread per synthetic sensor (GPS/Radar/Vision/etc.)
+### Threading model (typical)
 
-Fusion engine:
+- **Sensor generator(s)**: 1 thread per synthetic sensor (GPS/Radar/Vision/etc.)
+- **Fusion engine**:
+  - **Fusion thread**: consumes measurements from a thread-safe queue and updates per-entity trackers
+  - **Output thread**: periodically publishes fused states at a configurable rate
+- **Main thread**: orchestration + signal handling (Ctrl+C)
 
-Fusion thread: consumes measurements from a thread-safe queue and updates per-entity trackers
+### Fused state output
 
-Output thread: periodically publishes fused states at a configurable rate
-
-Main thread: orchestration + signal handling (Ctrl+C)
-
-Fused state output
 Each fused update includes:
 
-entityId
-
-entityType
-
-position (x, y, z)
-
-velocity (vx, vy, vz)
-
-confidence (0..1)
-
-timestamp + lastUpdateTime
-
-measurementCount
-
-contributingSensors (recent sensor types that updated the track)
+- `entityId`
+- `entityType`
+- `position` (x, y, z)
+- `velocity` (vx, vy, vz)
+- `confidence` (0..1)
+- `timestamp` + `lastUpdateTime`
+- `measurementCount`
+- `contributingSensors` (recent sensor types that updated the track)
 
 The network output currently emits JSON messages (suitable for a thin dashboard).
 
-Repository layout
+## Repository layout
 text
 BattlefieldSensorFusion/
 ├── CMakeLists.txt
@@ -88,91 +80,104 @@ BattlefieldSensorFusion/
 │   └── system/
 └── demo/
     └── demo_script.cpp
-Prerequisites
-CMake 3.15+
+```
 
-A C++17 compiler (GCC / Clang / MSVC)
+## Prerequisites
 
-Eigen3 (for matrix math)
+- CMake 3.15+
+- A C++17 compiler (GCC / Clang / MSVC)
+- Eigen3 (for matrix math)
 
-Install Eigen3
+### Install Eigen3
 
-Ubuntu/Debian
+**Ubuntu/Debian**
 
-bash
+```bash
 sudo apt-get update
 sudo apt-get install -y libeigen3-dev
-macOS (Homebrew)
+```
 
-bash
+**macOS (Homebrew)**
+
+```bash
 brew install eigen
-Windows (vcpkg)
+```
 
-bash
+**Windows (vcpkg)**
+
+```bash
 vcpkg install eigen3
-Build
-bash
+```
+
+## Build
+
+```bash
 mkdir -p build
 cd build
 cmake ..
 cmake --build . -j
+```
+
 Executables produced:
 
-sensor_fusion (full system run)
+- `sensor_fusion` (full system run)
+- `demo` (short portfolio demo)
 
-demo (short portfolio demo)
+## Run the portfolio demo
 
-Run the portfolio demo
-bash
+```bash
 cd build
 ./demo
+```
+
 What you should see:
 
-A terminal dashboard updating live every ~0.5–1s (depending on configured output rate).
+- A terminal dashboard updating live every ~0.5–1s (depending on configured output rate).
+- Stable fused tracks even when individual sensors drop or jitter.
 
-Stable fused tracks even when individual sensors drop or jitter.
+## Run the full system
 
-Run the full system
-bash
+```bash
 cd build
 ./sensor_fusion
-Default behavior (from src/main.cpp):
+```
 
-Starts multiple synthetic sensors with different update rates/noise profiles.
+Default behavior (from [src/main.cpp](src/main.cpp)):
 
-Tracks multiple entities simultaneously.
+- Starts multiple synthetic sensors with different update rates/noise profiles.
+- Tracks multiple entities simultaneously.
+- Streams fused results to CLI and to the network output on port 8080.
+- Runs until Ctrl+C.
 
-Streams fused results to CLI and to the network output on port 8080.
+## Configuration points (quick edits)
 
-Runs until Ctrl+C.
+You can adjust these in [src/main.cpp](src/main.cpp):
 
-Configuration points (quick edits)
-You can adjust these in src/main.cpp:
+- **Fusion output rate:**
+  ```cpp
+  fusionEngine->setOutputRateHz(5.0);
+  ```
 
-Fusion output rate:
+- **Stale track eviction:**
+  ```cpp
+  fusionEngine->setStaleEntityTimeout(std::chrono::seconds(15));
+  ```
 
-fusionEngine->setOutputRateHz(5.0);
+- **Per-sensor behavior (noise/update/dropout/delay):**
+  ```cpp
+  SyntheticSensorGenerator(SensorType::GPS, 1.0, 5.0);
+  setDropoutProbability(0.10);
+  setDelayMs(10, 50);
+  ```
 
-Stale track eviction:
+- **Entity trajectories:**
+  - Initial position + constant velocity for each entity.
 
-fusionEngine->setStaleEntityTimeout(std::chrono::seconds(15));
+## Network output (JSON)
 
-Per-sensor behavior (noise/update/dropout/delay):
-
-SyntheticSensorGenerator(SensorType::GPS, 1.0, 5.0);
-
-setDropoutProbability(0.10);
-
-setDelayMs(10, 50);
-
-Entity trajectories:
-
-Initial position + constant velocity for each entity.
-
-Network output (JSON)
 Example JSON for a single entity update:
 
-json
+```json
 {
   "entityId": 101,
   "type": "VEHICLE",
@@ -181,66 +186,49 @@ json
   "confidence": 0.92,
   "measurements": 145
 }
-Notes:
+```
 
-This backend keeps the output format straightforward to enable a thin visualization layer.
+**Notes:**
 
-A next step for a portfolio upgrade is to plug in a real WebSocket implementation (Boost.Beast or similar) or add gRPC streaming.
+- This backend keeps the output format straightforward to enable a thin visualization layer.
+- A next step for a portfolio upgrade is to plug in a real WebSocket implementation (Boost.Beast or similar) or add gRPC streaming.
 
-Extending the system
-Add a new sensor type
+## Extending the system
 
-Add an enum value in include/common/Types.h.
+### Add a new sensor type
 
-Implement a new class that implements SensorInterface (or extend SyntheticSensorGenerator).
+1. Add an enum value in [include/common/Types.h](include/common/Types.h).
+2. Implement a new class that implements `SensorInterface` (or extend `SyntheticSensorGenerator`).
+3. Define:
+   - update rate
+   - measurement covariance (noise model)
+   - optional velocity availability
+   - confidence behavior
 
-Define:
+### Add a new output sink
 
-update rate
+1. Implement `OutputInterface`.
+2. Register it in `SensorFusionSystem` via `addOutputInterface(...)`.
+3. Publish fused states in your preferred protocol:
+   - file logger
+   - UDP multicast
+   - WebSocket
+   - gRPC streaming
 
-measurement covariance (noise model)
+### Improve fusion realism (portfolio upgrades)
 
-optional velocity availability
+- Constant-turn / acceleration model (EKF/UKF).
+- Outlier rejection (Mahalanobis gating).
+- Per-sensor latency compensation + measurement-time ordering.
+- Track management (init/confirm/delete logic).
+- Metrics endpoint (rates, queue depths, per-entity update intervals).
 
-confidence behavior
+## Known limitations (intentional for a self-contained demo)
 
-Add a new output sink
+- Network output is a lightweight stub designed for easy integration; it does not yet implement full WebSocket framing/handshakes.
+- Motion model is constant velocity (good baseline; easy to extend).
+- Entity classification is simplified; entity type is currently defaulted in the tracker creation path.
 
-Implement OutputInterface.
+## License
 
-Register it in SensorFusionSystem via addOutputInterface(...).
-
-Publish fused states in your preferred protocol:
-
-file logger
-
-UDP multicast
-
-WebSocket
-
-gRPC streaming
-
-Improve fusion realism (portfolio upgrades)
-
-Constant-turn / acceleration model (EKF/UKF).
-
-Outlier rejection (Mahalanobis gating).
-
-Per-sensor latency compensation + measurement-time ordering.
-
-Track management (init/confirm/delete logic).
-
-Metrics endpoint (rates, queue depths, per-entity update intervals).
-
-Known limitations (intentional for a self-contained demo)
-Network output is a lightweight stub designed for easy integration; it does not yet implement full WebSocket framing/handshakes.
-
-Motion model is constant velocity (good baseline; easy to extend).
-
-Entity classification is simplified; entity type is currently defaulted in the tracker creation path.
-
-License
 MIT (recommended for portfolio projects). Add a LICENSE file if you plan to publish the repository publicly.
-
-text
-undefined
