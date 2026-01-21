@@ -1,8 +1,8 @@
 # Battlefield Sensor Fusion Backend (C++)
 
-A portfolio-ready C++17 backend that ingests multiple noisy, asynchronous battlefield sensor streams (GPS, vision, RF, radar, lidar), fuses them into a single real-time estimated state per entity using a Kalman filter, and publishes the fused state via CLI and a lightweight network output.
+A C++17 backend that ingests multiple noisy, asynchronous battlefield sensor streams (GPS, vision, RF, radar, lidar), fuses them into a single real-time estimated state per entity using a Kalman filter, and publishes the fused state via CLI and a lightweight network output.
 
-## What this project demonstrates
+## Functionalities
 - Real-time, multi-source ingestion with **asynchronous**, delayed, and missing updates.
 - Multi-entity tracking with separate per-entity filter state.
 - Sensor fusion using a high-performance Kalman filter with a constant-velocity motion model.
@@ -224,7 +224,7 @@ Example JSON for a single entity update:
 - Track management (init/confirm/delete logic).
 - Metrics endpoint (rates, queue depths, per-entity update intervals).
 
-## Known limitations (intentional for a self-contained demo)
+## Known limitations 
 
 - Network output is a lightweight stub designed for easy integration; it does not yet implement full WebSocket framing/handshakes.
 - Motion model is constant velocity (good baseline; easy to extend).
@@ -232,4 +232,4 @@ Example JSON for a single entity update:
 
 ## License
 
-MIT (recommended for portfolio projects). Add a LICENSE file if you plan to publish the repository publicly.
+MIT License
