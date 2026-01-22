@@ -1,4 +1,4 @@
-# Battlefield Sensor Fusion Backend (C++)
+# Battlefield Sensor Fusion 
 
 A C++17 backend that ingests multiple noisy, asynchronous battlefield sensor streams (GPS, vision, RF, radar, lidar), fuses them into a single real-time estimated state per entity using a Kalman filter, and publishes the fused state via CLI and a lightweight network output.
 
