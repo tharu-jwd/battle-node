@@ -69,7 +69,7 @@ namespace SensorFusion
     {
         std::cout << "\n";
         std::cout << "═══════════════════════════════════════════════════════════════════════════\n";
-        std::cout << "          BATTLEFIELD SENSOR FUSION SYSTEM - REAL-TIME TRACKER             \n";
+        std::cout << "                    BATTLE-NODE - REAL-TIME TRACKER                        \n";
         std::cout << "═══════════════════════════════════════════════════════════════════════════\n";
         std::cout << std::endl;
     }

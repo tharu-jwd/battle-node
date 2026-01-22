@@ -15,11 +15,13 @@ endif()
 # Find required packages
 find_package(Threads REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(Boost REQUIRED COMPONENTS system)
 
 # Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
 )
 
 # Source files
@@ -60,6 +62,7 @@ add_executable(sensor_fusion
 target_link_libraries(sensor_fusion
     Threads::Threads
     Eigen3::Eigen
+    Boost::system
 )
 
 # Demo executable
@@ -75,6 +78,7 @@ add_executable(demo
 target_link_libraries(demo
     Threads::Threads
     Eigen3::Eigen
+    Boost::system
 )
 
 # Installation

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Battle-Node - WebSocket Client</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        #status { font-size: 18px; font-weight: bold; margin: 10px 0; }
+        #messages {
+            height: 500px;
+            overflow-y: scroll;
+            border: 2px solid #333;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        button { padding: 10px 20px; margin: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Battle-Node - Live WebSocket Feed</h1>
+    <div id="status" style="color: red;">Disconnected</div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+    <button onclick="clearMessages()">Clear</button>
+    <div id="messages"></div>
+
+    <script>
+        let ws = null;
+        let messageCount = 0;
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                document.getElementById('status').innerText = 'Connected';
+                document.getElementById('status').style.color = 'green';
+            };
+
+            ws.onmessage = (event) => {
+                messageCount++;
+                const data = JSON.parse(event.data);
+                const msg = document.createElement('div');
+                msg.textContent = `[${messageCount}] Entity ${data.entityId} (${data.type}): ` +
+                    `pos=(${data.position.x.toFixed(1)}, ${data.position.y.toFixed(1)}, ${data.position.z.toFixed(1)}) ` +
+                    `vel=(${data.velocity.vx.toFixed(2)}, ${data.velocity.vy.toFixed(2)}, ${data.velocity.vz.toFixed(2)}) ` +
+                    `conf=${(data.confidence * 100).toFixed(1)}% measurements=${data.measurements}`;
+                document.getElementById('messages').appendChild(msg);
+
+                const div = document.getElementById('messages');
+                div.scrollTop = div.scrollHeight;
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                document.getElementById('status').innerText = 'Disconnected';
+                document.getElementById('status').style.color = 'red';
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+            messageCount = 0;
+        }
+    </script>
+</body>
+</html>

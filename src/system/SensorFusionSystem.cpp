@@ -33,7 +33,7 @@ namespace SensorFusion
         if (running_)
             return;
 
-        Logger::getInstance().info("Starting Sensor Fusion System...");
+        Logger::getInstance().info("Starting Battle-Node System...");
 
         if (fusionEngine_)
         {
@@ -61,7 +61,7 @@ namespace SensorFusion
         }
 
         running_ = true;
-        Logger::getInstance().info("Sensor Fusion System started successfully");
+        Logger::getInstance().info("Battle-Node System started successfully");
     }
 
     void SensorFusionSystem::stop()
@@ -69,7 +69,7 @@ namespace SensorFusion
         if (!running_)
             return;
 
-        Logger::getInstance().info("Stopping Sensor Fusion System...");
+        Logger::getInstance().info("Stopping Battle-Node System...");
 
         for (auto &sensor : sensors_)
         {
@@ -87,7 +87,7 @@ namespace SensorFusion
         }
 
         running_ = false;
-        Logger::getInstance().info("Sensor Fusion System stopped");
+        Logger::getInstance().info("Battle-Node System stopped");
     }
 
     void SensorFusionSystem::onSensorMeasurement(const SensorMeasurementPtr &measurement)

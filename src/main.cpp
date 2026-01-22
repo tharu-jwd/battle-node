@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     Logger::getInstance().setLogLevel(LogLevel::INFO);
     Logger::getInstance().setLogFile("sensor_fusion.log");
 
-    Logger::getInstance().info("Initializing Battlefield Sensor Fusion System");
+    Logger::getInstance().info("Initializing Battle-Node System");
 
     auto system = std::make_shared<SensorFusionSystem>();
     auto fusionEngine = std::make_shared<FusionEngine>();
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 
     system->start();
 
-    std::cout << "\nBattlefield Sensor Fusion System Running...\n";
+    std::cout << "\nBattle-Node System Running...\n";
     std::cout << "Press Ctrl+C to stop\n\n";
 
     while (keepRunning)
