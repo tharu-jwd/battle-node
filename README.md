@@ -1,6 +1,6 @@
-# Battlefield Sensor Fusion 
+# Battle-Node
 
-A C++17 backend that ingests multiple noisy, asynchronous battlefield sensor streams (GPS, vision, RF, radar, lidar), fuses them into a single real-time estimated state per entity using a Kalman filter, and publishes the fused state via CLI and a lightweight network output.
+A C++17 backend that ingests multiple noisy, asynchronous battlefield sensor streams (GPS, vision, RF, radar, lidar), fuses them into a single real-time estimated state per entity using a Kalman filter, and publishes the fused state via CLI and WebSocket server.
 
 ## Functionalities
 - Real-time, multi-source ingestion with **asynchronous**, delayed, and missing updates.
@@ -33,7 +33,7 @@ A C++17 backend that ingests multiple noisy, asynchronous battlefield sensor str
         +-------------+-------------+
         |                           |
   +-----v------+          +---------v--------+
-  |    CLI     |          |   Network Output |
+  |    CLI     |          | WebSocket Server |
   | Visualizer |          |  (port 8080)     |
   +------------+          +------------------+
 ```
@@ -59,14 +59,15 @@ Each fused update includes:
 - `measurementCount`
 - `contributingSensors` (recent sensor types that updated the track)
 
-The network output currently emits JSON messages (suitable for a thin dashboard).
+The WebSocket server broadcasts JSON messages at ~10 Hz to all connected clients.
 
 ## Repository layout
 
 ```text
-BattlefieldSensorFusion/
+battle-node/
 ├── CMakeLists.txt
 ├── README.md
+├── index.html (WebSocket test client)
 ├── include/
 │   ├── common/
 │   ├── sensors/
@@ -88,8 +89,11 @@ BattlefieldSensorFusion/
 - CMake 3.15+
 - A C++17 compiler (GCC / Clang / MSVC)
 - Eigen3 (for matrix math)
+- Boost (for WebSocket server via Boost.Beast)
 
-### Install Eigen3
+### Install Dependencies
+
+**Eigen3**
 
 **Ubuntu/Debian**
 
@@ -108,6 +112,26 @@ brew install eigen
 
 ```bash
 vcpkg install eigen3
+```
+
+**Boost**
+
+**Ubuntu/Debian**
+
+```bash
+sudo apt-get install -y libboost-all-dev
+```
+
+**macOS (Homebrew)**
+
+```bash
+brew install boost
+```
+
+**Windows (vcpkg)**
+
+```bash
+vcpkg install boost
 ```
 
 ## Build
@@ -147,8 +171,10 @@ Default behavior (from [src/main.cpp](src/main.cpp)):
 
 - Starts multiple synthetic sensors with different update rates/noise profiles.
 - Tracks multiple entities simultaneously.
-- Streams fused results to CLI and to the network output on port 8080.
+- Streams fused results to CLI and WebSocket server on port 8080.
 - Runs until Ctrl+C.
+
+To test the WebSocket connection, open `index.html` in your browser and click "Connect".
 
 ## Configuration points (quick edits)
 
@@ -174,7 +200,9 @@ You can adjust these in [src/main.cpp](src/main.cpp):
 - **Entity trajectories:**
   - Initial position + constant velocity for each entity.
 
-## Network output (JSON)
+## WebSocket Output (JSON)
+
+The server broadcasts JSON updates at ~10 Hz on `ws://localhost:8080`.
 
 Example JSON for a single entity update:
 
@@ -189,10 +217,22 @@ Example JSON for a single entity update:
 }
 ```
 
-**Notes:**
+**Implementation:**
 
-- This backend keeps the output format straightforward to enable a thin visualization layer.
-- A next step for a portfolio upgrade is to plug in a real WebSocket implementation (Boost.Beast or similar) or add gRPC streaming.
+- Production-ready WebSocket server using Boost.Beast
+- Async I/O with session management
+- Thread-safe message queuing with backpressure handling
+- Supports multiple concurrent clients
+- Graceful connection/disconnection handling
+
+**Testing:**
+
+Open `index.html` in your browser or connect with any WebSocket client:
+
+```javascript
+const ws = new WebSocket('ws://localhost:8080');
+ws.onmessage = (e) => console.log(JSON.parse(e.data));
+```
 
 ## Extending the system
 
@@ -213,8 +253,8 @@ Example JSON for a single entity update:
 3. Publish fused states in your preferred protocol:
    - file logger
    - UDP multicast
-   - WebSocket
    - gRPC streaming
+   - additional WebSocket endpoints
 
 ### Improve fusion realism (portfolio upgrades)
 
@@ -224,9 +264,8 @@ Example JSON for a single entity update:
 - Track management (init/confirm/delete logic).
 - Metrics endpoint (rates, queue depths, per-entity update intervals).
 
-## Known limitations 
+## Known limitations
 
-- Network output is a lightweight stub designed for easy integration; it does not yet implement full WebSocket framing/handshakes.
 - Motion model is constant velocity (good baseline; easy to extend).
 - Entity classification is simplified; entity type is currently defaulted in the tracker creation path.
 
