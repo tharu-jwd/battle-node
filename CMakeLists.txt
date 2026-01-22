@@ -14,7 +14,7 @@ endif()
 
 # Find required packages
 find_package(Threads REQUIRED)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)
 
 # Include directories
 include_directories(

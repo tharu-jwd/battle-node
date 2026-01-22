@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     system->setFusionEngine(fusionEngine);
 
     auto cliVisualizer = std::make_shared<CLIVisualizer>(true);
-    cliVisualizer->setVerbose(false);
+    cliVisualizer->setVerbose(true);
     system->addOutputInterface(cliVisualizer);
 
     auto wsServer = std::make_shared<WebSocketServer>(8080);
